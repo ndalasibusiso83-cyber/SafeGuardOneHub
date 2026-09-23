@@ -25,9 +25,9 @@ jobs:
           export ANDROID_HOME=$HOME/android-sdk
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
-          rm -rf app build.gradle settings.gradle
+          rm -rf app build.gradle settings.gradle gradle
           mkdir -p app/src/main/java/com/safeguard/onehub
-          echo "pluginManagement{repositories{google();mavenCentral();gradlePluginPortal()}} include ':app'" > settings.gradle
+          printf 'pluginManagement{\n repositories{\n google()\n mavenCentral()\n gradlePluginPortal()\n }\n}\ninclude ":app"\n' > settings.gradle
           echo " " > build.gradle
           echo "plugins{id 'com.android.application' version '8.1.0'} repositories{google();mavenCentral()} android{namespace 'com.safeguard.onehub';compileSdk 34;defaultConfig{applicationId 'com.safeguard.onehub';minSdk 24;targetSdk 34;versionCode 1;versionName '1.0'}}" > app/build.gradle
           printf '%s' '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:label="NDALA"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
