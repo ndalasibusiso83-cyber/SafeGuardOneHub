@@ -9,7 +9,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - uses: android-actions/setup-android@v3
       - name: Build NDALA
         run: |
           rm -rf app build.gradle settings.gradle
@@ -76,7 +75,7 @@ jobs:
           wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
           unzip -q gradle-8.7-bin.zip
           ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
-           chmod +x gradlew
+          chmod +x gradlew
           ./gradlew app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
