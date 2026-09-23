@@ -9,29 +9,29 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Setup SDK
+      - name: Build NDALA
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
-          unzip -q tools.zip
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          unzip -q *.zip
           mkdir -p latest
           mv cmdline-tools/* latest/ 2>/dev/null || true
           mv lib latest/ 2>/dev/null || true
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-      - name: Build
-        run: |
           export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-34" "build-tools;34.0.0"
-          rm -rf app build.gradle settings.gradle gradle
+          cd $GITHUB_WORKSPACE
+          rm -rf app build.gradle settings.gradle gradle gradlew*
           mkdir -p app/src/main/java/com/safeguard/onehub
-          printf 'pluginManagement{\n repositories{\n google()\n mavenCentral()\n gradlePluginPortal()\n }\n}\ninclude ":app"\n' > settings.gradle
-          echo " " > build.gradle
-          echo "plugins{id 'com.android.application' version '8.1.0'} repositories{google();mavenCentral()} android{namespace 'com.safeguard.onehub';compileSdk 34;defaultConfig{applicationId 'com.safeguard.onehub';minSdk 24;targetSdk 34;versionCode 1;versionName '1.0'}}" > app/build.gradle
-          printf '%s' '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:label="NDALA"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          printf '%s' 'package com.safeguard.onehub;import android.app.Activity;import android.os.Bundle;import android.webkit.*;public class MainActivity extends Activity{WebView w;protected void onCreate(Bundle b){super.onCreate(b);w=new WebView(this);setContentView(w);w.getSettings().setJavaScriptEnabled(true);w.setWebViewClient(new WebViewClient(){public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){String u=r.getUrl().toString().toLowerCase();if(u.contains("pornhub")||u.contains("xvideos")||u.contains("xnxx")){v.loadData("<h1>Blocked by NDALA</h1>","text/html","UTF-8");return true;}return false;}});w.loadUrl("https://www.google.com");}}' > app/src/main/java/com/safeguard/onehub/MainActivity.java
+          echo 'include ":app"' > settings.gradle
+          echo 'buildscript{repositories{google();mavenCentral()}dependencies{classpath"com.android.tools.build:gradle:8.1.0"}}' > build.gradle
+          echo 'apply plugin:"com.android.application"' > app/build.gradle
+          echo 'repositories{google();mavenCentral()}' >> app/build.gradle
+          echo 'android{namespace"com.safeguard.onehub";compileSdk 34;defaultConfig{applicationId"com.safeguard.onehub";minSdk 24;targetSdk 34;versionCode 1;versionName"1.0"}}' >> app/build.gradle
+          echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:label="NDALA"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+          echo 'package com.safeguard.onehub;import android.app.Activity;import android.os.Bundle;import android.webkit.*;public class MainActivity extends Activity{WebView w;protected void onCreate(Bundle b){super.onCreate(b);w=new WebView(this);setContentView(w);w.getSettings().setJavaScriptEnabled(true);w.setWebViewClient(new WebViewClient(){public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){String u=r.getUrl().toString().toLowerCase();if(u.contains("pornhub")||u.contains("xvideos")||u.contains("xnxx")){v.loadData("<h1>Blocked</h1>","text/html","UTF-8");return true;}return false;}});w.loadUrl("https://www.google.com");}}' > app/src/main/java/com/safeguard/onehub/MainActivity.java
           wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
           unzip -q gradle-8.7-bin.zip
           ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
@@ -39,5 +39,5 @@ jobs:
           ./gradlew app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: SafeGuard-NDALA-APK
+          name: NDALA-APK
           path: app/build/outputs/apk/debug/*.apk
