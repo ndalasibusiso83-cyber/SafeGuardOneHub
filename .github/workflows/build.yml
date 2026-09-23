@@ -6,17 +6,79 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with: { java-version: '17', distribution: 'temurin' }
+        with:
+          java-version: '17'
+          distribution: 'temurin'
       - uses: android-actions/setup-android@v3
-      - run: |
+      - name: Build NDALA
+        run: |
+          rm -rf app build.gradle settings.gradle
           mkdir -p app/src/main/java/com/safeguard/onehub
-          echo 'plugins { id "com.android.application" } android { compileSdk 34 defaultConfig { applicationId "com.safeguard.onehub" minSdk 24 targetSdk 34 versionCode 1 versionName "1.0" } } dependencies { implementation "androidx.appcompat:appcompat:1.6.1" }' > app/build.gradle
-          echo 'include ":app"' > settings.gradle
-          echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET"/><application android:label="SafeGuard One Hub"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          mkdir -p app/src/main/res/layout
-          echo 'package com.safeguard.onehub; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; import android.webkit.*; public class MainActivity extends AppCompatActivity { WebView wv; protected void onCreate(Bundle b){super.onCreate(b); wv=new WebView(this); setContentView(wv); wv.getSettings().setJavaScriptEnabled(true); wv.setWebViewClient(new WebViewClient(){ public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r){ String u=r.getUrl().toString().toLowerCase(); if(u.contains("pornhub")||u.contains("xvideos")||u.contains("xnxx")||u.contains("xhamster")){ v.loadData("<h1>🛡️ Blocked by SafeGuard NDALA</h1>","text/html","UTF-8"); return true; } return false; } }); wv.loadUrl("https://www.google.com"); } }' > app/src/main/java/com/safeguard/onehub/MainActivity.java
-          gradle assembleDebug
+          echo "include ':app'" > settings.gradle
+          echo "plugins { id 'com.android.application' version '8.1.0' apply false }" > build.gradle
+          cat > app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+            namespace 'com.safeguard.onehub'
+            compileSdk 34
+            defaultConfig {
+              applicationId "com.safeguard.onehub"
+              minSdk 24
+              targetSdk 34
+              versionCode 1
+              versionName "1.0"
+            }
+          }
+          dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
+          EOF
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <application android:label="SafeGuard NDALA">
+              <activity android:name=".MainActivity" android:exported="true">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN"/>
+                  <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          EOF
+          cat > app/src/main/java/com/safeguard/onehub/MainActivity.java <<'EOF'
+          package com.safeguard.onehub;
+          import android.os.Bundle;
+          import androidx.appcompat.app.AppCompatActivity;
+          import android.webkit.*;
+          public class MainActivity extends AppCompatActivity {
+            WebView w;
+            protected void onCreate(Bundle b){
+              super.onCreate(b);
+              w=new WebView(this);
+              setContentView(w);
+              w.getSettings().setJavaScriptEnabled(true);
+              w.setWebViewClient(new WebViewClient(){
+                public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r){
+                  String u=r.getUrl().toString().toLowerCase();
+                  if(u.contains("pornhub")||u.contains("xvideos")||u.contains("xnxx")||u.contains("xhamster")){
+                    v.loadData("<h1>Blocked by NDALA Family Shield</h1>","text/html","UTF-8");
+                    return true;
+                  }
+                  return false;
+                }
+              });
+              w.loadUrl("https://www.google.com");
+            }
+          }
+          EOF
+          wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip -q gradle-8.7-bin.zip
+          ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
+           chmod +x gradlew
+          ./gradlew app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: SafeGuard-APK-NDALA
+          name: SafeGuard-NDALA-APK
           path: app/build/outputs/apk/debug/*.apk
